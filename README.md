@@ -89,7 +89,14 @@ python yolo_trt.py .models/yoloe-26n-seg-text-320.onnx .models/yoloe-26n-seg-tex
 
 Restart the dashboard and select the new detector. Start with confidence `0.25` and class `0`. Leave **Exact count** blank for a changing scene. Set **Preload objects** to the expected maximum. Auto uses the latest valid count or one object on a fresh start.
 
-Upload a GLB, OBJ, PLY or STL and set its physical height and axis if needed. Select the mesh, enter a short **YOLOE prompt** such as `plastic bottle` and click **Apply settings**. Prompt changes require the export packages in `.yolo-deps/` and the tokenizer in `.yolo-clip/`. The dashboard caches a TensorRT engine for each prompt and resolution. All detected instances use the selected mesh.
+### Prepare a mesh for a different object
+
+- **From CAD:** Open your model in a CAD tool and export it as a triangle mesh, such as STL.
+- **From a physical object:** Scan it on an iPhone with Polycam’s Object Photogrammetry mode. If you get a `.gltf` export, open it in Blender and export as **glTF Binary (.glb)** to pack the mesh and textures into one file. [Polycam export guide](https://learn.poly.cam/hc/en-us/articles/27756102599572-What-File-Types-Can-Polycam-Export) · [Blender glTF guide](https://docs.blender.org/manual/en/latest/addons/scene_gltf2.html)
+
+The dashboard accepts **GLB, OBJ, PLY and STL** triangle meshes up to **40 MiB**. Use GLB for embedded textures. In **Mesh library**, upload the file. Enter the object's measured height in millimeters and choose its height axis if it needs scaling. Leave the height blank if the mesh is already in meters.
+
+Select the mesh, enter a **YOLOE prompt** such as `plastic bottle`, and click **Apply settings**. Prompt changes require the export packages in `.yolo-deps/` and the tokenizer in `.yolo-clip/`. The dashboard caches an engine for each prompt and resolution. All detected instances use the selected mesh.
 
 ## Carry the pipeline into a product
 
