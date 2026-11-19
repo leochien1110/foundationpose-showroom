@@ -56,16 +56,18 @@ For four cans, FP Infer Lib tracked fastest at **3.89 ms** and retained **14.56 
 
 For this sweep, all runs replayed the same recording of four physical cans. A warmed 320 × 320 YOLOE-26n TensorRT FP16 engine at confidence 0.25 found all four cans on all 16 frames. Each run registered the first one, two, three, or four masks from left to right in a fresh process. All runs returned every requested pose on 11 registration frames and then tracked five more frames.
 
-| Registered cans | Original FP peak (GiB) | FP Infer Lib peak (GiB) | Shared Workspace peak, 5 refinements (GiB) | Shared Workspace peak, 3 refinements (GiB) |
-|---:|---:|---:|---:|---:|
-| 1 | 6.86 | 4.29 | 3.72 | 3.72 |
-| 2 | 7.05 | 7.72 | 3.91 | 3.91 |
-| 3 | 7.24 | 11.14 | 4.10 | 4.10 |
-| 4 | 7.43 | 14.56 | 4.29 | 4.29 |
+Sampled peak process VRAM in GiB.
+
+| Registered cans | Original FP | FP Infer Lib | Shared Workspace |
+|---:|---:|---:|---:|
+| 1 | 6.86 | 4.29 | 3.72 |
+| 2 | 7.05 | 7.72 | 3.91 |
+| 3 | 7.24 | 11.14 | 4.10 |
+| 4 | 7.43 | 14.56 | 4.29 |
 
 ![Peak process VRAM by registered object count for FP Infer Lib and Shared Workspace](docs/media/vram-by-object-count.png)
 
-FP Infer Lib allocates a GPU workspace for each estimator. In this sweep, peak process VRAM grew by about **3.42 GiB per additional can**. Shared Workspace reuses the large buffers and added about **0.19 GiB per can** at either refinement count. With four cans it retained **3.20 GiB** after tracking, compared with **14.56 GiB** for FP Infer Lib.
+FP Infer Lib allocates a GPU workspace for each estimator. In this sweep, peak process VRAM grew by about **3.42 GiB per additional can**. Shared Workspace reuses the large buffers and added about **0.19 GiB per can**. With four cans it retained **3.20 GiB** after tracking, compared with **14.56 GiB** for FP Infer Lib.
 
 Original FP uses the demo’s sequential runner. It shares the refiner and scorer across objects and added about **0.19 GiB per can**, starting from a higher one-can peak.
 
@@ -75,13 +77,13 @@ To repeat the sweep, replay the same capture and YOLO TensorRT engine with `benc
 
 We fit a straight line to each runtime’s measured peak process VRAM at one through four cans. Estimated capacity is the largest whole number of objects that fits the line within the budget. The calculation uses the full VRAM budget with zero extra headroom and applies no dashboard object limit.
 
-| VRAM budget (GiB) | Original FP | FP Infer Lib | Shared Workspace, 5 refinements | Shared Workspace, 3 refinements |
-|---:|---:|---:|---:|---:|
-| 8 | 7 | 2 | 23 | 23 |
-| 16 | 49 | 4 | 65 | 65 |
-| 24 | 91 | 6 | 106 | 106 |
-| 32 | 134 | 9 | 148 | 148 |
-| 64 | 303 | 18 | 315 | 315 |
+| VRAM budget (GiB) | Original FP | FP Infer Lib | Shared Workspace |
+|---:|---:|---:|---:|
+| 8 | 7 | 2 | 23 |
+| 16 | 49 | 4 | 65 |
+| 24 | 91 | 6 | 106 |
+| 32 | 134 | 9 | 148 |
+| 64 | 303 | 18 | 315 |
 
 The fitted peak is `baseline + GiB per object × object count`. The table rounds down using the unrounded fit.
 
@@ -89,8 +91,7 @@ The fitted peak is `baseline + GiB per object × object count`. The table rounds
 |---|---:|---:|
 | Original FP | 6.672 | 0.189 |
 | FP Infer Lib | 0.872 | 3.423 |
-| Shared Workspace, 5 refinements | 3.525 | 0.191 |
-| Shared Workspace, 3 refinements | 3.525 | 0.191 |
+| Shared Workspace | 3.525 | 0.191 |
 
 Only one through four objects were measured. The larger counts are memory extrapolations. GPU overhead, other workloads, larger meshes and different engine settings can change usable capacity. The estimates do not impose a latency target.
 
