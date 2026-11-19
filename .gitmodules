@@ -1,0 +1,6 @@
+[submodule "upstream/original"]
+	path = upstream/original
+	url = https://github.com/NVlabs/FoundationPose.git
+[submodule "upstream/inference"]
+	path = upstream/inference
+	url = https://github.com/nvidia-isaac/foundation-pose-inference-library.git

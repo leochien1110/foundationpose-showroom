@@ -1,0 +1,12 @@
+.camera-deps*/
+.build/
+variants/pooled/
+/.fp-runtime
+/.fp-shared-workspace.patch
+results/
+__pycache__/
+.yolo-deps/
+.models/
+.yolo-clip/
+
+.mesh-library/

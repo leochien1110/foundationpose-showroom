@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FoundationPose dashboard</title>
+<style>
+:root{color-scheme:dark;--page:#11191c;--panel:#172326;--line:#2c4045;--text:#eef6f4;--muted:#a8bdbd;--accent:#9dedb9}
+*{box-sizing:border-box}body{margin:0;background:var(--page);color:var(--text);font:15px system-ui,sans-serif}
+main{max-width:1440px;margin:auto;padding:26px clamp(14px,3vw,38px)}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:20px}
+h1{margin:0;font-size:clamp(22px,3vw,30px);letter-spacing:-.035em}h2{font-size:16px;margin:0 0 12px}
+#phase{background:#24373a;color:var(--accent);border:1px solid var(--line);padding:5px 10px;border-radius:5px;font:12px ui-monospace,monospace}
+.layout{display:grid;align-items:start;grid-template-columns:minmax(0,1fr) minmax(300px,340px);gap:16px}
+.panel{border:1px solid var(--line);border-radius:9px;background:var(--panel);padding:15px}
+.view-controls{display:flex;align-items:center;gap:7px;margin:0 0 9px;flex-wrap:wrap}
+.view-controls button{font-size:13px}.view-controls button[aria-pressed=true]{border-color:var(--accent);color:var(--accent)}
+#viewports{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#viewports[data-layout=camera],#viewports[data-layout=scene]{grid-template-columns:1fr}
+#viewports[data-layout=camera] .scene-panel,#viewports[data-layout=scene] .camera-panel{display:none}
+.view-label{margin:0 0 5px;color:var(--muted);font-size:12px}
+.scene-view{display:block;width:100%;aspect-ratio:4/3;background:#0e1619;border-radius:7px;touch-action:none;cursor:grab}
+.scene-view:active{cursor:grabbing}#scene-note{margin:6px 0 0;min-height:16px}
+.view{position:relative;background:#0e1619;width:100%;aspect-ratio:4/3;display:grid;place-items:center;overflow:hidden;border-radius:7px}
+.view img{width:100%;height:100%;object-fit:contain;position:absolute;inset:0}
+[hidden]{display:none!important}.view p{color:var(--muted);margin:15px;text-align:center}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0}
+.metric{border:1px solid var(--line);border-radius:5px;padding:8px 10px;min-width:0}
+.metric span,.hint{color:var(--muted);font-size:12px}.metric strong{display:block;font:17px ui-monospace,monospace;margin-top:3px}
+#status{min-height:20px;margin:6px 0;color:var(--muted);overflow-wrap:anywhere}
+.controls{display:flex;gap:7px;flex-wrap:wrap;margin-top:11px}
+button,select,input{font:inherit;border:1px solid #42595d;border-radius:5px;background:#202f33;color:var(--text);min-width:0}
+button{padding:7px 9px;cursor:pointer}button[data-stage][aria-pressed=true]{background:var(--accent);color:#14281d;border-color:var(--accent);font-weight:650}
+button:disabled,input:disabled{opacity:.5;cursor:default}button:not(:disabled):hover{filter:brightness(1.16)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+aside{display:flex;flex-direction:column;gap:14px}.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fields .full{grid-column:1 / -1}label{display:flex;flex-direction:column;gap:4px;font-size:13px}
+input,select{width:100%;padding:7px 8px}input[type=file]{padding:5px;font-size:12px}
+.hint{margin:8px 0;line-height:1.45}
+.message{min-height:18px;word-break:break-word}
+.repo-link{display:inline-block;margin-top:4px;padding:6px 9px;border:1px solid var(--line);border-radius:5px;color:var(--accent);font-size:13px;text-decoration:none}
+.repo-link:hover{border-color:var(--accent)}
+@media(max-width:850px){.layout{grid-template-columns:1fr}aside{display:grid;grid-template-columns:1fr 1fr}}
+@media(max-width:600px){aside,#viewports{grid-template-columns:1fr}.metrics{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<main>
+<header><h1>FoundationPose dashboard</h1><span id="phase">STOPPED</span></header>
+<div class="layout">
+<section class="panel" aria-label="Camera and pose controls">
+  <div class="view-controls" aria-label="Viewport layout">
+    <button type="button" data-view="split" aria-pressed="true">Split view</button>
+    <button type="button" data-view="camera" aria-pressed="false">Camera</button>
+    <button type="button" data-view="scene" aria-pressed="false">3D scene</button>
+    <button type="button" id="reset-view">Reset 3D view</button>
+  </div>
+  <div id="viewports" data-layout="split">
+    <div class="camera-panel"><p class="view-label">Live camera</p>
+      <div class="view"><p id="placeholder">Start Stream or Capture to see the scene.</p><img id="stream" hidden alt="RealSense color image with pose and timing overlays"></div>
+    </div>
+    <div class="scene-panel"><p class="view-label">Camera frame · 3D</p>
+      <canvas id="scene" class="scene-view" aria-label="Orbitable 3D view of the calibrated camera field of view and registered objects"></canvas>
+      <p class="hint" id="scene-note"></p>
+    </div>
+  </div>
+  <div class="metrics">
+    <div class="metric"><span>Detected</span><strong id="detected">0</strong></div>
+    <div class="metric"><span>Registered</span><strong id="registered">0</strong></div>
+    <div class="metric"><span id="registration-label">Last registration</span><strong id="registration">—</strong></div>
+    <div class="metric"><span>Process VRAM</span><strong id="vram">—</strong></div>
+  </div>
+  <p id="status" role="status">Camera stopped</p>
+  <div class="controls" aria-label="Vision pipeline">
+    <button id="stream-toggle" data-stage="stream" aria-pressed="false">Stream</button>
+    <button id="capture-toggle" data-stage="capture" aria-pressed="false">Capture</button>
+    <button id="detect" data-stage="detect" aria-pressed="false">Detect</button>
+    <button id="register" data-stage="register" aria-pressed="false">Register</button>
+    <button id="track" data-stage="track" aria-pressed="false">Track</button>
+    <button id="reinitialize" data-action="reinitialize">Reinitialize</button>
+  </div>
+  <p class="hint">Choose Stream for live tracking or Capture to hold one frame. Click a highlighted stage to turn it and its dependent stages off.</p>
+</section>
+<aside>
+<form class="panel" id="settings">
+  <h2>Detection and pose settings</h2>
+  <div class="fields">
+    <label class="full">Pose runtime<select id="mode"></select></label>
+    <label class="full">Pose updates<select id="delivery"><option value="batch">Together after registration</option><option value="sequential">Sequential · show each pose as it returns</option></select></label>
+    <label class="full">Object detector<select id="model"></select></label>
+    <label>Confidence<input id="score" type="number" min="0" max="1" step="0.01" required></label>
+    <label>Class IDs<input id="labels" placeholder="0" title="Comma-separated detector class IDs"></label>
+    <label>Exact count<input id="count" type="number" min="1" max="32" placeholder="Auto"></label>
+    <label>Object limit<input id="limit" type="number" min="1" max="32" required></label>
+    <label>Mesh<select id="mesh"></select></label>
+    <label>YOLOE prompt<input id="prompt" maxlength="128" placeholder="soda can" aria-describedby="prompt-hint"></label>
+    <p class="hint full" id="prompt-hint" hidden>Enter one object name. A new prompt builds a TensorRT engine on first use. Repeat prompts reuse the cached engine.</p>
+    <label>Model loading<select id="loading"><option value="on_demand">On demand</option><option value="preload">Preload</option></select></label>
+    <label id="preload-count-field" hidden>Preload objects<input id="preload_count" type="number" min="1" max="32" placeholder="Auto"></label>
+  </div>
+  <p class="hint">Pose runtime and pose updates apply when selected. Leave the exact count blank to register every usable detection up to the object limit. The selected mesh applies to each instance.</p>
+  <button id="apply" type="submit">Apply settings</button>
+  <button type="button" id="preload" data-action="preload" hidden>Preload again</button>
+  <p class="hint" id="preload-hint" hidden>Preload warms up detection, registration, and tracking. If Exact count is set, it determines how many objects to prepare. Otherwise, leave Preload objects blank to use the latest valid detection count, or one object if none is available. Set a capacity to avoid rebuilding when the scene has up to that many objects.</p>
+  <p class="hint" id="models-ready">Models load when first used.</p>
+  <div class="hint message" id="settings-message" role="status"></div>
+  <a class="repo-link" id="runtime-repo" target="_blank" rel="noopener noreferrer" hidden>Runtime repository</a>
+</form>
+<form class="panel" id="upload">
+  <h2>Mesh library</h2>
+  <div class="fields">
+    <label class="full">Mesh file<input type="file" id="file" accept=".glb,.obj,.ply,.stl" required></label>
+    <label>Physical height (mm)<input id="height" type="number" min="0.01" step="any" placeholder="Use file units"></label>
+    <label>Height axis<select id="axis"><option>X</option><option selected>Y</option><option>Z</option></select></label>
+  </div>
+  <p class="hint">GLB, OBJ, PLY, or STL, up to 40 MiB. With height blank, coordinates are treated as meters. Use a GLB with embedded textures for textured scans.</p>
+  <button type="submit" id="upload-button">Upload and convert</button>
+  <div class="hint message" id="upload-message" role="status"></div>
+</form>
+</aside>
+</div>
+</main>
+<script>
+const el = id => document.getElementById(id)
+const fields = ['model','score','labels','count','limit','mesh','prompt','loading','preload_count']
+const runtimeFields = ['mode','delivery']
+const stages = {stream:'streaming', capture:'captured', detect:'detecting', register:'registering', track:'tracking'}
+let models = [], runtimes = [], last = null, dirty = false, busy = false, cameraImage = ""
+let statusRequest = 0
+const selectedModel = () => models.find(row => row.id === el('model').value)
+const modelName = id => ({sdetr:'SyntheticaDETR', 'rgbd-can':'RGB-D single can'}[id] || id.replace('.plan',''))
+const ms = value => value == null ? '—' : value.toFixed(1) + ' ms'
+function fillOptions(select, rows, label) {
+  select.replaceChildren(...rows.map(row => new Option(label(row), row.id)))
+}
+async function options() {
+  const response = await fetch('/options.json', {cache:'no-store'})
+  if (!response.ok) throw new Error('Could not load detector and mesh options')
+  const data = await response.json()
+  models = data.models
+  runtimes = data.runtimes
+  const oldRuntime = el('mode').value
+  fillOptions(el('mode'), runtimes, row => row.label)
+  if (oldRuntime) el('mode').value = oldRuntime
+  updateRuntimeRepo()
+  const oldModel = el('model').value
+  const oldMesh = el('mesh').value
+  fillOptions(el('model'), models, row => modelName(row.id))
+  fillOptions(el('mesh'), data.meshes, row => row.name)
+  if (oldModel) el('model').value = oldModel
+  if (oldMesh) el('mesh').value = oldMesh
+}
+function updateRuntimeRepo() {
+  const runtime = runtimes.find(row => row.id === el('mode').value)
+  const link = el('runtime-repo')
+  link.hidden = !runtime
+  if (runtime) {
+    link.href = runtime.repo
+    link.title = runtime.repo
+    link.textContent = runtime.modified ? 'Base repo on GitHub ↗' : 'Runtime repo on GitHub ↗'
+  }
+}
+function buttons() {
+  const buildingPrompt = last?.state === 'BUILDING'
+  const blocked = busy || buildingPrompt
+  const changingSource = ['OPENING','CAPTURING'].includes(last?.state)
+  const available = {
+    stream: Boolean(last && !changingSource),
+    capture: Boolean(last && !changingSource),
+    detect: Boolean(last?.streaming || last?.captured),
+    register: Boolean(last?.detecting),
+    track: Boolean(last?.streaming && last?.registering && (last?.poses_ready ?? last?.registered))
+  }
+  for (const button of document.querySelectorAll('[data-stage]')) {
+    const stage = button.dataset.stage
+    const active = Boolean(last?.[stages[stage]])
+    button.setAttribute('aria-pressed', String(active))
+    button.disabled = blocked || changingSource || (!active && !available[stage])
+  }
+  el('reinitialize').disabled = blocked || !last?.registering
+  const textModel = Boolean(selectedModel()?.prompt)
+  el('labels').readOnly = textModel
+  el('prompt').disabled = !textModel
+  el('prompt').required = textModel
+  el('prompt-hint').hidden = !textModel
+  for (const key of runtimeFields) el(key).disabled = buildingPrompt
+  const wantsPreload = el('loading').value === 'preload'
+  el('preload-count-field').hidden = !wantsPreload
+  el('preload-hint').hidden = !wantsPreload
+  el('preload_count').disabled = !wantsPreload || Boolean(el('count').value)
+  el('preload').hidden = !wantsPreload
+  el('preload').disabled = blocked || changingSource || dirty || last?.preloading || last?.config.loading !== 'preload'
+  el('apply').disabled = blocked || changingSource || last?.preloading || !dirty
+}
+function settingsChanged() {
+  dirty = true
+  el('settings-message').textContent = 'Apply to use the edited settings.'
+  buttons()
+}
+function showModelReadiness(update) {
+  el('models-ready').textContent = update.preloading
+    ? 'Preloading models…'
+    : (update.detector_ready ? 'Detector ready' : 'Detector pending') + ' · ' +
+      (update.prepared_objects ? 'Registration and tracking ready for ' + update.prepared_objects + ' objects' : 'Registration and tracking pending')
+}
+function show(update) {
+  last = update
+  el('phase').textContent = update.state || 'STOPPED'
+  el('status').textContent = update.detail
+  el('detected').textContent = update.detected ?? 0
+  el('registered').textContent = update.registered ?? 0
+  showModelReadiness(update)
+  const hasSource = update.streaming || update.captured
+  const sequential = update.config.delivery === 'sequential'
+  el('registration-label').textContent = sequential ? 'Last object registration' : 'Last registration'
+  el('registration').textContent = ms(sequential ? update.last_object_registration_ms : update.last_registration_ms)
+  if (update.vram_gib != null) el('vram').textContent = update.vram_gib.toFixed(2) + ' GiB'
+  const source = update.frame && hasSource
+    ? (update.captured ? '/frame.jpg?frame=' + update.frame : '/stream.mjpg')
+    : ''
+  if (source !== cameraImage) {
+    cameraImage = source
+    if (source) el('stream').src = source
+    else el('stream').removeAttribute('src')
+  }
+  el('stream').hidden = !source
+  el('placeholder').hidden = Boolean(source)
+  buttons()
+}
+async function refresh() {
+  const request = ++statusRequest
+  const response = await fetch('/status.json', {cache:'no-store',signal:AbortSignal.timeout(5000)})
+  if (!response.ok) throw new Error('Preview disconnected')
+  const update = await response.json()
+  if (request !== statusRequest) return
+  if (!last) {
+    for (const key of [...runtimeFields,...fields]) el(key).value = update.config[key] ?? ({delivery:'batch',loading:'on_demand'}[key] ?? '')
+    if (!el('prompt').value) el('prompt').value = selectedModel()?.prompt ?? ''
+    updateRuntimeRepo()
+  }
+  show(update)
+}
+async function send(path, body, headers = {}) {
+  const response = await fetch(path,{method:'POST',headers:{'X-Pose-Dashboard':'1', ...headers},body,
+    signal:AbortSignal.timeout(path === '/upload' ? 30000 : 5000)})
+  if (!response.ok) {
+    const error = new DOMParser().parseFromString(await response.text(), 'text/html')
+    throw new Error(error.querySelector('p')?.textContent || 'Request failed')
+  }
+  return response.json()
+}
+async function control(action, argument = {}) {
+  busy = true
+  buttons()
+  try {
+    await send('/control', JSON.stringify({action,...argument}), {'Content-Type':'application/json'})
+    if (action === 'apply') {
+      dirty = false
+      el('settings-message').textContent = 'Settings applied. Enable Register to estimate poses.'
+    }
+    await refresh()
+  } catch (error) {
+    el('status').textContent = error.message
+    if (action === 'apply' || action === 'runtime') el('settings-message').textContent = error.message
+  } finally {
+    busy = false
+    buttons()
+  }
+}
+for (const button of document.querySelectorAll('[data-stage]')) button.onclick = () => {
+  const stage = button.dataset.stage
+  control(stage, {enabled: !last?.[stages[stage]]})
+}
+for (const button of document.querySelectorAll('[data-action]')) button.onclick = () => control(button.dataset.action)
+for (const name of fields) el(name).addEventListener('input', settingsChanged)
+for (const name of runtimeFields) el(name).addEventListener('change', () => {
+  updateRuntimeRepo()
+  control('runtime', {config:{mode:el('mode').value,delivery:el('delivery').value}})
+})
+el('model').addEventListener('change', () => {
+  const model = selectedModel()
+  if (model) {
+    el('score').value = model.score
+    el('labels').value = model.labels.join(',')
+    if (model.prompt && !el('prompt').value) el('prompt').value = model.prompt
+  }
+  settingsChanged()
+})
+el('settings').onsubmit = event => {
+  event.preventDefault()
+  const labels = el('labels').value.split(',').map(s => s.trim()).filter(Boolean)
+  if (labels.some(label => !/^\d+$/.test(label))) {
+    el('settings-message').textContent = 'Class IDs must be comma-separated nonnegative integers.'
+    return
+  }
+  control('apply', {config:{mode:el('mode').value,delivery:el('delivery').value,model:el('model').value,score:Number(el('score').value),
+    labels:labels.map(Number),mesh:el('mesh').value,prompt:el('prompt').disabled ? null : el('prompt').value,
+    count:el('count').value ? Number(el('count').value) : null,
+    limit:Number(el('limit').value),loading:el('loading').value,
+    preload_count:!el('preload_count').disabled && el('preload_count').value ? Number(el('preload_count').value) : null}})
+}
+el('upload').onsubmit = async event => {
+  event.preventDefault()
+  const file = el('file').files[0]
+  el('upload-button').disabled = true
+  el('upload-message').textContent = 'Converting mesh…'
+  try {
+    const entry = await send('/upload',file,{'X-Mesh-Name':encodeURIComponent(file.name),
+      'X-Mesh-Height':el('height').value,'X-Mesh-Axis':el('axis').value})
+    await options()
+    el('mesh').value = entry.id
+    settingsChanged()
+    el('upload-message').textContent = 'Converted ' + entry.name + ' · ' + entry.triangles.toLocaleString() + ' triangles.'
+  } catch(error) {el('upload-message').textContent = error.message}
+  finally {el('upload-button').disabled = false}
+}
+el('stream').onerror = () => { cameraImage = '' }
+buttons()
+options().then(refresh).then(() => {
+  setInterval(() => { refresh().catch(error => { el('status').textContent = error.message }) }, 450)
+}).catch(error => {el('status').textContent = error.message})
+</script>
+<script src="/viewport.js"></script>
+</body>
+</html>
