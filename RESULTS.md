@@ -88,6 +88,21 @@ FP Infer Lib allocates a GPU workspace for each estimator. In this sweep, peak p
 
 To repeat the sweep, replay the same capture and YOLO TensorRT engine with `benchmark.py --take-first --objects N` for each count.
 
+## What refinement means
+
+A candidate pose is a guess at the object's position and rotation in the camera frame. During initial registration, FoundationPose uses the detector mask and aligned depth to estimate an initial position. The benchmark starts with **252 candidate rotations per object**.
+
+1. Render the CAD mesh at each candidate pose. Use the camera intrinsics to align the rendered crop with the observed RGB-D crop.
+2. Feed the rendered and observed crops into **RefineNet**. It predicts a translation and rotation correction. Applying that correction is **one refinement pass**.
+3. Render again with the updated poses and repeat for the configured number of passes.
+4. Run **ScoreNet** after the final pass and return the highest-scoring pose. That pose seeds the tracker.
+
+**Three vs. five refinements** changes how many times the render-and-correct loop runs. Both settings start with the same 252 candidates and score them after refinement. Three passes give 756 candidate updates per object. Five passes give 1,260. Detection and final scoring still take time, and both variants reuse the same GPU workspace.
+
+In the four-can replay, reducing the count from five to three lowered the warm median registration time from **705.5 ms to 466.9 ms**. Both variants peaked at **4.29 GiB**. The five-pass build matched stock FP Infer Lib on all 44 paired poses. Compared with the five-pass build, three passes changed the pose by a median of **0.34 mm** and **0.42°**. The largest differences were **2.00 mm** and **2.38°**. These differences measure agreement between runs. Absolute accuracy requires ground-truth poses.
+
+**Tracking uses two refinement passes per frame** in these benchmarks. It starts from one prior pose per object and refines it against the new RGB-D frame. That avoids repeating detection, the 252-candidate search, and ScoreNet on each tracking frame. [Upstream registration and tracking architecture](https://github.com/nvidia-isaac/foundation-pose-inference-library/blob/89dd4cfec75f944b9fca52d9cb282725f1666c12/doc/ARCHITECTURE.md)
+
 ## How to read the numbers
 
 Model setup includes detector and pose runtime initialization. The first and warmed registration timings start with an aligned frame in host memory after setup. They include detection, mask creation and synchronized pose registration through the last pose. The plot markers show p95. Peak process VRAM was sampled with NVML, including setup. Sampling can miss short spikes. Pose overlays were checked visually and transform deltas are relative to the stock TensorRT output. Absolute 6D accuracy was not measured against ground truth.

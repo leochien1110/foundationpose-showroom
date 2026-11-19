@@ -4,6 +4,8 @@
 
 A dashboard for 6D pose registration and tracking with RGB-D cameras. View live overlays, 3D poses, latency and VRAM. Try it with the [145 mm soda-can scan](examples/soda-can/).
 
+**One refinement** renders the CAD mesh at a candidate pose, compares it with the RGB-D image, and adjusts the position and rotation. The refinement count below is the number of passes per candidate during registration. [How refinement works](RESULTS.md#what-refinement-means)
+
 The three-refinement Shared Workspace build achieved:
 
 - **107.9 ms to first pose at 3.68 GiB peak VRAM** with warmed YOLOE and one can.
