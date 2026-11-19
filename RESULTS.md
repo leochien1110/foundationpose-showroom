@@ -30,7 +30,14 @@ Each runtime returned a pose on all 21 paired frames. The warmed percentiles use
 | Shared Workspace, 5 refinements | 230.2 | 175.8 / 176.2 | 3.68 |
 | Shared Workspace, 3 refinements | **173.5** | **116.3 / 116.7** | **3.68** |
 
-On a separate live single-can test with the detector warmed during setup, the three-refinement run returned its first pose in **107.9 ms** from aligned frame to pose and **149.6 ms** from the start of camera wait to pose. Model setup took **1.76 s** before the timed trial.
+### Live single-can startup
+
+Both configurations used the three-refinement Shared Workspace runtime and returned poses on 10 of 10 trials. Model setup and camera warmup preceded the timed trials.
+
+| Detector | Model setup (s) | First aligned frame to pose (ms) | First camera wait to pose (ms) | Sampled peak process VRAM (GiB) |
+|---|---:|---:|---:|---:|
+| YOLOE warmed during setup | 1.76 | **107.9** | **149.6** | 3.68 |
+| Built-in RGB-D can detector | 1.61 | 110.4 | 152.2 | **3.45** |
 
 ## How to read the numbers
 

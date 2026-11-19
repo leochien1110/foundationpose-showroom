@@ -2,6 +2,14 @@
 
 A hands-on test of 6D object pose registration and tracking with a RealSense D435. The dashboard shows the camera overlay, the estimated poses in an orbitable 3D view, registration time and GPU memory. The included example uses a [textured soda-can scan](examples/soda-can/) scaled to its measured height of 145 mm.
 
+On a **RealSense D435** and **RTX PRO 6000 Blackwell Max-Q**, the three-refinement Shared Workspace build achieved:
+
+- **Fastest first pose: 107.9 ms at 3.68 GiB peak VRAM** for one can with warmed YOLOE.
+- **Lowest peak VRAM: 3.45 GiB at 110.4 ms to first pose** for one can with the RGB-D detector.
+- **Three cans: 342.5 ms median for all poses at 4.10 GiB peak VRAM**, with 35% lower latency and 63% lower peak VRAM than stock FP Infer Lib on the same frames.
+
+The single-can timings start with an aligned frame after model setup. VRAM is sampled process memory. [Benchmark details](RESULTS.md)
+
 > This is an independent test project. It is not an official NVIDIA repository and is not affiliated with or endorsed by NVIDIA. Thanks to NVlabs for FoundationPose, the NVIDIA Isaac team for the FoundationPose Inference Library, and the RealSense and Ultralytics teams for the camera and detector tools used in the evaluation.
 
 Start with one can using the built-in RGB-D detector, then try multiple cans with a text-prompted detector. The dashboard also accepts your own GLB, OBJ, PLY, or STL mesh.
