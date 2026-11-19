@@ -17,6 +17,8 @@ YOLOE-26n with the prompt `soda can`, a 320 × 320 TensorRT FP16 engine and conf
 
 The three-refinement Shared Workspace run reduced median registration latency by **35%** and peak process VRAM by **63%** relative to FP Infer Lib. Five refinements produced identical pose matrices for the 33 paired poses.
 
+The Shared Workspace build reuses its large GPU workspace across objects. Per-object allocations still contribute to total process VRAM. The one-can and three-can YOLOE runs used different input resolutions, so their peak VRAM difference includes detector configuration as well as object count.
+
 ## One physical can
 
 ![Registration latency and process VRAM for one can](docs/media/single-can-comparison.png)

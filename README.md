@@ -8,6 +8,8 @@ On a **RealSense D435** and **RTX PRO 6000 Blackwell Max-Q**, the three-refineme
 - **Lowest peak VRAM: 3.45 GiB at 110.4 ms to first pose** for one can with the RGB-D detector.
 - **Three cans: 342.5 ms median for all poses at 4.10 GiB peak VRAM**, with 35% lower latency and 63% lower peak VRAM than stock FP Infer Lib on the same frames.
 
+**The large GPU workspace is shared across objects.** Each additional object carries its own mesh buffers and pose state, so total VRAM can still grow with object count.
+
 The single-can timings start with an aligned frame after model setup. VRAM is sampled process memory. [Benchmark details](RESULTS.md)
 
 > This is an independent test project. It is not an official NVIDIA repository and is not affiliated with or endorsed by NVIDIA. Thanks to NVlabs for FoundationPose, the NVIDIA Isaac team for the FoundationPose Inference Library, and the RealSense and Ultralytics teams for the camera and detector tools used in the evaluation.
