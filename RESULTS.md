@@ -56,6 +56,23 @@ Each run tracked five frames after registration. Latency is the median time to u
 
 For three cans, stock FP Infer Lib tracked fastest at **2.81 ms** and retained **11.14 GiB**. Shared Workspace with three refinements tracked in **6.79 ms** and retained **3.00 GiB**, a **73% reduction**. Original FP retained the least memory at **1.72 GiB** and took **31.94 ms** per tracking frame.
 
+## VRAM by object count
+
+For this sweep, all runs replayed the same recording of four physical cans. A warmed 320 × 320 YOLOE-26n TensorRT FP16 engine at confidence 0.25 found all four cans on all 16 frames. Each run registered the first one, two, three, or four masks from left to right in a fresh process. All runs returned every requested pose on 11 registration frames and then tracked five more frames.
+
+| Registered cans | FP Infer Lib peak (GiB) | Shared Workspace peak, 5 refinements (GiB) | Shared Workspace peak, 3 refinements (GiB) |
+|---:|---:|---:|---:|
+| 1 | 4.29 | 3.72 | 3.72 |
+| 2 | 7.72 | 3.91 | 3.91 |
+| 3 | 11.14 | 4.10 | 4.10 |
+| 4 | 14.56 | 4.29 | 4.29 |
+
+![Peak process VRAM by registered object count for FP Infer Lib and Shared Workspace](docs/media/vram-by-object-count.png)
+
+FP Infer Lib allocates a GPU workspace for each estimator. In this sweep, peak process VRAM grew by about **3.42 GiB per additional can**. Shared Workspace reuses the large buffers and added about **0.19 GiB per can** at either refinement count. With four cans it retained **3.20 GiB** after tracking, compared with **14.56 GiB** for FP Infer Lib.
+
+To repeat the sweep, replay the same capture and YOLO TensorRT engine with `benchmark.py --take-first --objects N` for each count.
+
 ## How to read the numbers
 
 Model setup includes detector and pose runtime initialization. The first and warmed registration timings start with an aligned frame in host memory after setup. They include detection, mask creation and synchronized pose registration through the last pose. The plot markers show p95. Peak process VRAM was sampled with NVML, including setup. Sampling can miss short spikes. Pose overlays were checked visually and transform deltas are relative to the stock TensorRT output. Absolute 6D accuracy was not measured against ground truth.

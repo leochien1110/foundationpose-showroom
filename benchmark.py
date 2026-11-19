@@ -191,7 +191,7 @@ def configure_runtime(mode):
     sys.path[:0] = [str(RUNTIME_ROOT / "runtime"), str(ROOT / "upstream/inference/python/src")]
 
 
-def make_detector(args):
+def make_detector(args, *, take_first=False):
     if args.detector == "sdetr":
         from detector import Detector
 
@@ -207,7 +207,13 @@ def make_detector(args):
             detector.warmup()
 
         def infer(rgb, depth, K):
-            return detector.infer(rgb, args.labels, args.score, args.objects)
+            count = None if take_first else args.objects
+            masks, boxes = detector.infer(rgb, args.labels, args.score, count)
+            if not take_first:
+                return masks, boxes
+            if len(masks) < args.objects:
+                return [], boxes
+            return masks[:args.objects], boxes[:args.objects]
     else:
         def infer(rgb, depth, K):
             return detect_can(rgb, depth, K, args.height_m)
@@ -249,8 +255,12 @@ def main():
     parser.add_argument("--detector", choices=("sdetr", "rgbd-can", "yolo-trt"), default="sdetr")
     parser.add_argument("--engine", type=Path)
     parser.add_argument("--warm-detector", action="store_true")
+    parser.add_argument("--take-first", action="store_true",
+                        help="With YOLO TensorRT, register the first N sorted detections for --objects N")
     parser.add_argument("--height-m", type=float, required=True)
     args = parser.parse_args()
+    if args.take_first and args.detector != "yolo-trt":
+        parser.error("--take-first requires yolo-trt")
     if args.warm_detector and args.detector != "yolo-trt":
         parser.error("--warm-detector requires yolo-trt")
     if args.detector == "yolo-trt" and not args.engine:
@@ -266,7 +276,7 @@ def main():
     monitor.thread.start()
     result = dict(mode=args.mode, objects=args.objects, height_m=args.height_m, score=args.score,
                   labels=args.labels, detector=args.detector, engine=args.engine.name if args.engine else None,
-                  detector_warmup=args.warm_detector,
+                  detector_warmup=args.warm_detector, take_first=args.take_first,
                   capture=args.capture.name, hypotheses=HYPOTHESES,
                   register_iterations=3 if args.mode == "pooled-3" else 5, trials=[])
     camera = ExitStack()
@@ -276,7 +286,7 @@ def main():
 
         logging.getLogger().setLevel(logging.ERROR)
         torch.set_num_threads(4)
-        detect_objects = make_detector(args)
+        detect_objects = make_detector(args, take_first=args.take_first)
         mesh = load_scan(SCAN, args.height_m)
         if args.mode == "original":
             runtime = Original(args.objects, mesh, args.output.parent / "original-debug")

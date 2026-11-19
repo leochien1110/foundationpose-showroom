@@ -29,6 +29,8 @@ All four runtimes processed the same recorded frames.
 
 ![Three-can comparison of registration latency, peak VRAM and VRAM after tracking](docs/media/three-can-comparison.png)
 
+In a separate one-to-four-can test, each added can increased peak VRAM by about **3.42 GiB** with FP Infer Lib and **0.19 GiB** with Shared Workspace. Both used five refinements. [VRAM scaling chart](RESULTS.md#vram-by-object-count)
+
 [Full setup, registration and tracking results](RESULTS.md)
 
 ## On-demand loading and preload
