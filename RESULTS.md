@@ -8,33 +8,14 @@ All four runtimes replayed the same 16 D435 frames with a warmed 320 × 320 YOLO
 
 ![Registration latency and process VRAM for four cans](docs/media/four-can-comparison.png)
 
-| Pose runtime | Model setup (s) | First all poses (ms) | Warm median / p95 (ms) | Peak process VRAM (GiB) | Median tracking (ms) | VRAM after tracking (GiB) |
-|---|---:|---:|---:|---:|---:|---:|
-| Original FP | 20.18 | 3699.8 | 2885.2 / 2901.1 | 7.43 | 44.32 | 1.92 |
-| FP Infer Lib | 2.99 | 689.0 | 707.3 / 708.2 | 14.56 | 3.89 | 14.56 |
-| Shared Workspace, 5 refinements | 2.97 | 690.6 | 705.5 / 707.3 | 4.29 | 8.87 | 3.20 |
-| Shared Workspace, 3 refinements | 2.95 | 453.8 | 466.9 / 467.7 | 4.29 | 8.90 | 3.20 |
-
-Shared Workspace with three refinements reduced the median registration time by **34%** and peak process VRAM by **71%** compared with FP Infer Lib. The same recording was used for the [object-count sweep](#vram-by-object-count).
-
-## Three physical cans
-
-![Registration latency and process VRAM for three cans](docs/media/three-can-comparison.png)
-
-YOLOE-26n with the prompt `soda can`, a 320 × 320 TensorRT FP16 engine and confidence 0.25 found all three cans on all 16 recorded frames. Each runtime returned all three poses on 11 of 11 registration frames. The remaining five frames were used for tracking.
-
 | Pose runtime | Model setup (s) | First all poses (ms) | Warm median / p95 (ms) | Peak process VRAM (GiB) |
 |---|---:|---:|---:|---:|
-| Original FP | 15.26 | 2910.8 | 2146.0 / 2151.7 | 7.24 |
-| FP Infer Lib | 2.40 | 510.9 | 528.4 / 530.4 | 11.14 |
-| Shared Workspace, 5 refinements | 2.38 | 509.1 | 521.4 / 526.4 | **4.10** |
-| Shared Workspace, 3 refinements | 2.39 | **333.4** | **342.5 / 343.9** | **4.10** |
+| Original FP | 20.18 | 3699.8 | 2885.2 / 2901.1 | 7.43 |
+| FP Infer Lib | 2.99 | 689.0 | 707.3 / 708.2 | 14.56 |
+| Shared Workspace, 5 refinements | 2.97 | 690.6 | 705.5 / 707.3 | 4.29 |
+| Shared Workspace, 3 refinements | 2.95 | 453.8 | 466.9 / 467.7 | 4.29 |
 
-With three refinements, Shared Workspace reduced median registration latency by **35%** and peak VRAM by **63%** relative to stock FP Infer Lib. Relative to Original FP, it reduced median latency by **84%** and peak VRAM by **43%**.
-
-With five refinements, Shared Workspace returned identical matrices to stock FP Infer Lib for all 33 paired poses. The warmed median was 521.4 ms versus 528.4 ms, and peak VRAM dropped from 11.14 GiB to 4.10 GiB.
-
-The large workspace is shared across objects. Mesh buffers and pose state still consume memory per object. The one-can and three-can runs used different YOLOE resolutions, so their peaks reflect both detector configuration and object count.
+Shared Workspace with three refinements reduced the median registration time by **34%** and peak process VRAM by **71%** compared with FP Infer Lib. The same recording was used for the [object-count sweep](#vram-by-object-count).
 
 ## One physical can
 
@@ -62,31 +43,56 @@ Both configurations used the three-refinement Shared Workspace runtime and retur
 
 Each run tracked five frames after registration. Latency is the median time to update all poses on one frame, with GPU synchronization. The tracker uses the existing pose and skips detection.
 
-| Pose runtime | One can (ms) | One can VRAM after tracking (GiB) | Three cans (ms) | Three cans VRAM after tracking (GiB) |
+| Pose runtime | One can (ms) | One can VRAM after tracking (GiB) | Four cans (ms) | Four cans VRAM after tracking (GiB) |
 |---|---:|---:|---:|---:|
-| Original FP | 10.65 | 1.34 | 31.94 | 1.72 |
-| FP Infer Lib | 2.40 | 4.25 | 2.81 | 11.14 |
-| Shared Workspace, 5 refinements | 2.45 | 2.58 | 6.64 | 3.00 |
-| Shared Workspace, 3 refinements | 2.33 | 2.58 | 6.79 | 3.00 |
+| Original FP | 10.65 | 1.34 | 44.32 | 1.92 |
+| FP Infer Lib | 2.40 | 4.25 | 3.89 | 14.56 |
+| Shared Workspace, 5 refinements | 2.45 | 2.58 | 8.87 | 3.20 |
+| Shared Workspace, 3 refinements | 2.33 | 2.58 | 8.90 | 3.20 |
 
-For three cans, stock FP Infer Lib tracked fastest at **2.81 ms** and retained **11.14 GiB**. Shared Workspace with three refinements tracked in **6.79 ms** and retained **3.00 GiB**, a **73% reduction**. Original FP retained the least memory at **1.72 GiB** and took **31.94 ms** per tracking frame.
+For four cans, FP Infer Lib tracked fastest at **3.89 ms** and retained **14.56 GiB**. Shared Workspace with three refinements tracked in **8.90 ms** and retained **3.20 GiB**. Original FP retained **1.92 GiB** and took **44.32 ms** per tracking frame.
 
 ## VRAM by object count
 
 For this sweep, all runs replayed the same recording of four physical cans. A warmed 320 × 320 YOLOE-26n TensorRT FP16 engine at confidence 0.25 found all four cans on all 16 frames. Each run registered the first one, two, three, or four masks from left to right in a fresh process. All runs returned every requested pose on 11 registration frames and then tracked five more frames.
 
-| Registered cans | FP Infer Lib peak (GiB) | Shared Workspace peak, 5 refinements (GiB) | Shared Workspace peak, 3 refinements (GiB) |
-|---:|---:|---:|---:|
-| 1 | 4.29 | 3.72 | 3.72 |
-| 2 | 7.72 | 3.91 | 3.91 |
-| 3 | 11.14 | 4.10 | 4.10 |
-| 4 | 14.56 | 4.29 | 4.29 |
+| Registered cans | Original FP peak (GiB) | FP Infer Lib peak (GiB) | Shared Workspace peak, 5 refinements (GiB) | Shared Workspace peak, 3 refinements (GiB) |
+|---:|---:|---:|---:|---:|
+| 1 | 6.86 | 4.29 | 3.72 | 3.72 |
+| 2 | 7.05 | 7.72 | 3.91 | 3.91 |
+| 3 | 7.24 | 11.14 | 4.10 | 4.10 |
+| 4 | 7.43 | 14.56 | 4.29 | 4.29 |
 
 ![Peak process VRAM by registered object count for FP Infer Lib and Shared Workspace](docs/media/vram-by-object-count.png)
 
 FP Infer Lib allocates a GPU workspace for each estimator. In this sweep, peak process VRAM grew by about **3.42 GiB per additional can**. Shared Workspace reuses the large buffers and added about **0.19 GiB per can** at either refinement count. With four cans it retained **3.20 GiB** after tracking, compared with **14.56 GiB** for FP Infer Lib.
 
+Original FP uses the demo’s sequential runner. It shares the refiner and scorer across objects and added about **0.19 GiB per can**, starting from a higher one-can peak.
+
 To repeat the sweep, replay the same capture and YOLO TensorRT engine with `benchmark.py --take-first --objects N` for each count.
+
+### Estimated capacity by GPU VRAM
+
+We fit a straight line to each runtime’s measured peak process VRAM at one through four cans. Estimated capacity is the largest whole number of objects that fits the line within the budget. The calculation uses the full VRAM budget with zero extra headroom and applies no dashboard object limit.
+
+| VRAM budget (GiB) | Original FP | FP Infer Lib | Shared Workspace, 5 refinements | Shared Workspace, 3 refinements |
+|---:|---:|---:|---:|---:|
+| 8 | 7 | 2 | 23 | 23 |
+| 16 | 49 | 4 | 65 | 65 |
+| 24 | 91 | 6 | 106 | 106 |
+| 32 | 134 | 9 | 148 | 148 |
+| 64 | 303 | 18 | 315 | 315 |
+
+The fitted peak is `baseline + GiB per object × object count`. The table rounds down using the unrounded fit.
+
+| Pose runtime | Fitted baseline (GiB) | GiB per additional object |
+|---|---:|---:|
+| Original FP | 6.672 | 0.189 |
+| FP Infer Lib | 0.872 | 3.423 |
+| Shared Workspace, 5 refinements | 3.525 | 0.191 |
+| Shared Workspace, 3 refinements | 3.525 | 0.191 |
+
+Only one through four objects were measured. The larger counts are memory extrapolations. GPU overhead, other workloads, larger meshes and different engine settings can change usable capacity. The estimates do not impose a latency target.
 
 ## What refinement means
 

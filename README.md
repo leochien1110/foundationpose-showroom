@@ -31,7 +31,7 @@ All four runtimes processed the same recorded frames.
 
 ![Four-can comparison of registration latency, peak VRAM and VRAM after tracking](docs/media/four-can-comparison.png)
 
-On this recording, each added can increased peak VRAM by about **3.42 GiB** with FP Infer Lib and **0.19 GiB** with Shared Workspace. Both used five refinements. [VRAM scaling chart](RESULTS.md#vram-by-object-count)
+On this recording, each added can increased peak VRAM by about **3.42 GiB** with FP Infer Lib and **0.19 GiB** with Shared Workspace. Both used five refinements. [VRAM scaling and capacity estimates](RESULTS.md#vram-by-object-count)
 
 [Full setup, registration and tracking results](RESULTS.md#four-physical-cans)
 
