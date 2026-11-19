@@ -16,6 +16,21 @@ Objects share the large GPU workspace. Each object adds mesh buffers and pose st
 
 [Bring-up](#bring-up) · [Multiple objects](#multiple-objects-and-custom-meshes) · [Product integration](#carry-the-pipeline-into-a-product) · [Benchmarks](RESULTS.md)
 
+## Three-can benchmark
+
+All four runtimes processed the same recorded frames.
+
+| Pose runtime | Warm median for all poses (ms) | Peak process VRAM (GiB) |
+|---|---:|---:|
+| Original FP | 2146.0 | 7.24 |
+| FP Infer Lib | 528.4 | 11.14 |
+| Shared Workspace, 5 refinements | 521.4 | **4.10** |
+| Shared Workspace, 3 refinements | **342.5** | **4.10** |
+
+![Three-can comparison of registration latency, peak VRAM and VRAM after tracking](docs/media/three-can-comparison.png)
+
+[Full setup, registration and tracking results](RESULTS.md)
+
 ## On-demand loading and preload
 
 **On demand** loads each model when needed. **Preload** warms detection, registration and tracking when you apply settings. Preload moves first-use allocation ahead of registration. These recordings use the Shared Workspace build.
