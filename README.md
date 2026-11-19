@@ -6,7 +6,31 @@ A hands-on test of 6D object pose registration and tracking with a RealSense D43
 
 Start with one can using the built-in RGB-D detector, then try multiple cans with a text-prompted detector. The dashboard also accepts your own GLB, OBJ, PLY, or STL mesh.
 
-[Bring-up](#bring-up) · [Multiple objects](#multiple-objects-and-custom-meshes) · [Product integration](#carry-the-pipeline-into-a-product) · [Benchmark results](RESULTS.md)
+[Live demos](#live-demos) · [Bring-up](#bring-up) · [Multiple objects](#multiple-objects-and-custom-meshes) · [Product integration](#carry-the-pipeline-into-a-product) · [Benchmark results](RESULTS.md)
+
+## Live demos
+
+### Live tracking with a changing object count
+
+The dashboard detects cans as they enter the scene, then overlays the registered outlines and the corresponding 3D poses in the D435 camera frustum.
+
+![Live RealSense tracking as the scene changes from zero to four cans](docs/media/Screencast%20from%202026-11-19%2015-14-00.gif)
+
+### Sequential pose registration
+
+With **Sequential** pose updates, the dashboard can display each registered pose as it returns. **Last object registration** reports the time for the most recently completed object.
+
+![Sequential registration of four soda cans in the camera and 3D views](docs/media/Screencast%20from%202026-11-19%2015-17-08.gif)
+
+### On-demand loading and preload
+
+**On demand** loads models as their stages first need them. **Preload** warms up detection, registration and tracking when you apply the settings, so GPU memory is allocated before registration starts.
+
+| On demand | Preload |
+|---|---|
+| ![Dashboard using on-demand model loading](docs/media/model_ondemand.gif) | ![Dashboard warming models before enabling registration](docs/media/model_preload.gif) |
+
+The recordings use the local **Shared Workspace** build. See the [benchmark results](RESULTS.md) for measured latency and VRAM comparisons.
 
 ## Bring-up
 
