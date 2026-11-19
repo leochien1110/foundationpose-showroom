@@ -1,8 +1,10 @@
 # FoundationPose Showroom
 
-A hands-on test of 6D object pose registration and tracking with a RealSense D435. The dashboard shows the camera overlay, the estimated poses in an orbitable 3D view, registration time and GPU memory. The included example uses a [textured soda-can scan](examples/soda-can/) scaled to its measured height of 145 mm.
+![Live RealSense tracking as the scene changes from zero to four cans](docs/media/Screencast%20from%202026-11-19%2015-14-00.gif)
 
-On a **RealSense D435** and **RTX PRO 6000 Blackwell Max-Q**, the three-refinement Shared Workspace build achieved:
+A hands-on test of 6D object pose registration and tracking from RGB-D frames. The dashboard shows the camera overlay, the estimated poses in an orbitable 3D view, registration time and GPU memory. The included example uses a [textured soda-can scan](examples/soda-can/) scaled to its measured height of 145 mm.
+
+The three-refinement Shared Workspace build achieved:
 
 - **Fastest first pose: 107.9 ms at 3.68 GiB peak VRAM** for one can with warmed YOLOE.
 - **Lowest peak VRAM: 3.45 GiB at 110.4 ms to first pose** for one can with the RGB-D detector.
@@ -16,23 +18,9 @@ The single-can timings start with an aligned frame after model setup. VRAM is sa
 
 Start with one can using the built-in RGB-D detector, then try multiple cans with a text-prompted detector. The dashboard also accepts your own GLB, OBJ, PLY, or STL mesh.
 
-[Live demos](#live-demos) · [Bring-up](#bring-up) · [Multiple objects](#multiple-objects-and-custom-meshes) · [Product integration](#carry-the-pipeline-into-a-product) · [Benchmark results](RESULTS.md)
+[On-demand loading and preload](#on-demand-loading-and-preload) · [Bring-up](#bring-up) · [Multiple objects](#multiple-objects-and-custom-meshes) · [Product integration](#carry-the-pipeline-into-a-product) · [Benchmark results](RESULTS.md)
 
-## Live demos
-
-### Live tracking with a changing object count
-
-The dashboard detects cans as they enter the scene, then overlays the registered outlines and the corresponding 3D poses in the D435 camera frustum.
-
-![Live RealSense tracking as the scene changes from zero to four cans](docs/media/Screencast%20from%202026-11-19%2015-14-00.gif)
-
-### Sequential pose registration
-
-With **Sequential** pose updates, the dashboard can display each registered pose as it returns. **Last object registration** reports the time for the most recently completed object.
-
-![Sequential registration of four soda cans in the camera and 3D views](docs/media/Screencast%20from%202026-11-19%2015-17-08.gif)
-
-### On-demand loading and preload
+## On-demand loading and preload
 
 **On demand** loads models as their stages first need them. **Preload** warms up detection, registration and tracking when you apply the settings, so GPU memory is allocated before registration starts.
 
@@ -134,6 +122,8 @@ For startup latency, warm both registration and tracking and measure the first *
 The **Shared Workspace** figures in the benchmark came from a private local build. The public integration path uses the upstream APIs, warmup, bounded object capacity and the upstream memory controls. Measure initial registration, steady-state tracking, peak VRAM and ground-truth pose error on your own objects and hardware before choosing a configuration. [Benchmark results](RESULTS.md)
 
 ## Replay a benchmark
+
+The published benchmarks used a RealSense D435 and an NVIDIA RTX PRO 6000 Blackwell Max-Q. [Benchmark setup and results](RESULTS.md)
 
 Capture a baseline on the host with a Python environment that has NumPy, OpenCV and `pyrealsense2`. Stop the dashboard's stream first so the capture script can open the D435.
 
