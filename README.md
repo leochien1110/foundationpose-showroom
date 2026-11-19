@@ -109,7 +109,8 @@ flowchart LR
     cad["CAD mesh"] --> register
     intrinsics["Camera intrinsics"] --> register
     register -->|Initial 6D pose| tracker["FoundationPose tracker"]
-    next["Later RGB and aligned depth frames"] --> tracker
+    next_rgb["Later RGB frames"] --> tracker
+    next_depth["Later aligned depth frames"] --> tracker
     cad --> tracker
     intrinsics --> tracker
     tracker --> poses["Tracked 6D poses at higher FPS"]
