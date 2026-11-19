@@ -8,7 +8,7 @@ The three-refinement Shared Workspace build achieved:
 
 - **107.9 ms to first pose at 3.68 GiB peak VRAM** with warmed YOLOE and one can.
 - **3.45 GiB peak VRAM at 110.4 ms to first pose** with the RGB-D detector and one can.
-- **342.5 ms median for three poses at 4.10 GiB peak VRAM**. That’s 35% lower latency and 63% lower peak VRAM than stock FP Infer Lib on the same frames.
+- **466.9 ms median for four poses at 4.29 GiB peak VRAM**. That’s 34% lower latency and 71% lower peak VRAM than stock FP Infer Lib on the same frames.
 
 Objects share the large GPU workspace. Each object adds mesh buffers and pose state. Single-can timings start with an aligned frame after setup. Peak VRAM is sampled for the process and includes setup. [Benchmark details](RESULTS.md)
 
@@ -16,22 +16,22 @@ Objects share the large GPU workspace. Each object adds mesh buffers and pose st
 
 [Bring-up](#bring-up) · [Multiple objects](#multiple-objects-and-custom-meshes) · [Product integration](#carry-the-pipeline-into-a-product) · [Benchmarks](RESULTS.md)
 
-## Three-can benchmark
+## Four-can benchmark
 
 All four runtimes processed the same recorded frames.
 
 | Pose runtime | Warm median for all poses (ms) | Peak process VRAM (GiB) |
 |---|---:|---:|
-| Original FP | 2146.0 | 7.24 |
-| FP Infer Lib | 528.4 | 11.14 |
-| Shared Workspace, 5 refinements | 521.4 | **4.10** |
-| Shared Workspace, 3 refinements | **342.5** | **4.10** |
+| Original FP | 2885.2 | 7.43 |
+| FP Infer Lib | 707.3 | 14.56 |
+| Shared Workspace, 5 refinements | 705.5 | **4.29** |
+| Shared Workspace, 3 refinements | **466.9** | **4.29** |
 
-![Three-can comparison of registration latency, peak VRAM and VRAM after tracking](docs/media/three-can-comparison.png)
+![Four-can comparison of registration latency, peak VRAM and VRAM after tracking](docs/media/four-can-comparison.png)
 
-In a separate one-to-four-can test, each added can increased peak VRAM by about **3.42 GiB** with FP Infer Lib and **0.19 GiB** with Shared Workspace. Both used five refinements. [VRAM scaling chart](RESULTS.md#vram-by-object-count)
+On this recording, each added can increased peak VRAM by about **3.42 GiB** with FP Infer Lib and **0.19 GiB** with Shared Workspace. Both used five refinements. [VRAM scaling chart](RESULTS.md#vram-by-object-count)
 
-[Full setup, registration and tracking results](RESULTS.md)
+[Full setup, registration and tracking results](RESULTS.md#four-physical-cans)
 
 ## On-demand loading and preload
 

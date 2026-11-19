@@ -2,6 +2,21 @@
 
 The tests used an NVIDIA RTX PRO 6000 Blackwell Max-Q GPU with driver 595.99.02, a RealSense D435 running firmware 5.13.0.50 and aligned 640 × 480 RGB-D at 30 FPS. Each implementation received the same frames in the paired comparisons.
 
+## Four physical cans
+
+All four runtimes replayed the same 16 D435 frames with a warmed 320 × 320 YOLOE-26n TensorRT FP16 detector at confidence 0.25. Each runtime returned all four poses on every one of the 11 registration frames and tracked five more frames.
+
+![Registration latency and process VRAM for four cans](docs/media/four-can-comparison.png)
+
+| Pose runtime | Model setup (s) | First all poses (ms) | Warm median / p95 (ms) | Peak process VRAM (GiB) | Median tracking (ms) | VRAM after tracking (GiB) |
+|---|---:|---:|---:|---:|---:|---:|
+| Original FP | 20.18 | 3699.8 | 2885.2 / 2901.1 | 7.43 | 44.32 | 1.92 |
+| FP Infer Lib | 2.99 | 689.0 | 707.3 / 708.2 | 14.56 | 3.89 | 14.56 |
+| Shared Workspace, 5 refinements | 2.97 | 690.6 | 705.5 / 707.3 | 4.29 | 8.87 | 3.20 |
+| Shared Workspace, 3 refinements | 2.95 | 453.8 | 466.9 / 467.7 | 4.29 | 8.90 | 3.20 |
+
+Shared Workspace with three refinements reduced the median registration time by **34%** and peak process VRAM by **71%** compared with FP Infer Lib. The same recording was used for the [object-count sweep](#vram-by-object-count).
+
 ## Three physical cans
 
 ![Registration latency and process VRAM for three cans](docs/media/three-can-comparison.png)
