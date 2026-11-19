@@ -22,7 +22,7 @@ Objects share the large GPU workspace. Each object adds mesh buffers and pose st
 
 | On demand | Preload |
 |---|---|
-| ![Dashboard using on-demand model loading](docs/media/model_ondemand.gif) | ![Dashboard warming models before enabling registration](docs/media/model_preload.gif) |
+| <img src="docs/media/model_ondemand.gif" alt="Dashboard using on-demand model loading" width="360"> | <img src="docs/media/model_preload.gif" alt="Dashboard warming models before enabling registration" width="360"> |
 
 ## Bring-up
 
