@@ -102,10 +102,17 @@ Select the mesh, enter a **YOLOE prompt** such as `plastic bottle`, and click **
 
 ```mermaid
 flowchart LR
-    camera["Aligned RGB-D"] --> masks["Instance masks"]
-    masks --> register["Register with metric CAD"]
-    register --> track["Track across frames"]
-    track --> publish["Publish 6D poses"]
+    rgb["RGB frame"] --> detector["Object detection and segmentation"]
+    detector -->|Instance mask| register["FoundationPose registration"]
+    rgb --> register
+    depth["Aligned depth"] --> register
+    cad["CAD mesh"] --> register
+    intrinsics["Camera intrinsics"] --> register
+    register -->|Initial 6D pose| tracker["FoundationPose tracker"]
+    next["Later RGB and aligned depth frames"] --> tracker
+    cad --> tracker
+    intrinsics --> tracker
+    tracker --> poses["Tracked 6D poses at higher FPS"]
 ```
 
 | Step | What to carry over |
